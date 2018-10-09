@@ -11,11 +11,11 @@ output:
 ---
 ## Introduction
 
-The below is a limited exploratory data analysis on the brfss [data set](https://www.cdc.gov/brfss/annual_data/annual_2013.html) for the purposes of an assigment for the Introduction to Probability and Data course offered by Duke University on Coursera [link](https://www.coursera.org/learn/probability-intro). The assigmment requires choosing three questions by the program participants based on their interest, the underlying data, and, the learning objectives of the module. Since the dataset is large (over 330 variables) the EDA will focus on variables assumed relevent to the questions being posed by the author.
+The below is a limited exploratory data analysis on the brfss [data set](https://www.cdc.gov/brfss/annual_data/annual_2013.html) for the purposes of an assignment for the Introduction to Probability and Data course offered by Duke University on Coursera [link](https://www.coursera.org/learn/probability-intro). The assignment requires choosing three questions by the program participants based on their interest, the underlying data, and, the learning objectives of the module. Since the data-set is large (over 330 variables) the EDA will focus on variables assumed relevant to the questions being posed by the author.
 
 ## Setup
 
-The following version of R is being used (`r getRversion()`) and the markdown file is being created through RStudio's desktop [client](https://www.rstudio.com/products/rstudio/#Desktop). For a complete detail of the code used to generate this document please visit (github link). For the purposes of readability, the EDA will focus on the summary statistics and graphics generated from the same and will skip some of the code output not required for grading the assignment.
+The following version of R is being used (`r getRversion()`) and the markdown file is being created through R Studio's desktop [client](https://www.rstudio.com/products/rstudio/#Desktop). For a complete detail of the code used to generate this document please visit the git-hub [link](https://github.com/maximegalon5/brfss_exploration). For the purposes of readability, the EDA will focus on the summary statistics and graphics generated from the same and will skip some of the code output not required for grading the assignment.
 
 ### Load packages
 
@@ -36,12 +36,12 @@ br_data <- brfss2013; rm("brfss2013")
 
 ## Part 1: Data
 
-Per CDC's brief on the BRFSS2013 dataset [link](https://www.cdc.gov/brfss/annual_data/2013/pdf/Overview_2013.pdf), the Behavioral Risk Factor Surveillance System (BRFSS) project, and the resulant dataset, is a collaboration between the Centers for Disease Control (CDC) and US States and participating Territitories. The purpose of collecting data regarding health-related risk behaviors, chronic health conditions, and use of preventive services is to better create health promotion tools for US residents. The following aspects of the dataset are relevent to this project:
+Per CDC's brief on the BRFSS2013 data-set [link](https://www.cdc.gov/brfss/annual_data/2013/pdf/Overview_2013.pdf), the Behavioral Risk Factor Surveillance System (BRFSS) project, and the resultant data-set, is a collaboration between the Centers for Disease Control (CDC) and US States and participating Territories. The purpose of collecting data regarding health-related risk behaviors, chronic health conditions, and use of preventive services is to better create health promotion tools for US residents. The following aspects of the data-set are relevant to this project:
 
 * It is an observational study conducted via telephones and cellular phones and hence correlations between variables can be ascertained. Causal inference cannot be made unless advanced techniques [link](https://www.stata-journal.com/sjpdf.html?articlenum=st0136) (beyond the scope of this project) are deployed.
-      + The study methodology recognizes that some individuals have both landlines and cellular phones and only selects people for the study that have either a landline or use their cellular phone as thier primary phone more than 90 % of the time. Their are randomization algorithms in place to ensure randomized sampling.
+      + The study methodology recognizes that some individuals have both land-lines and cellular phones and only selects people for the study that have either a land-line or use their cellular phone as their primary phone more than 90 % of the time. Their are randomization algorithms in place to ensure randomized sampling.
 
-* The sampling method and subsequent 'raking' methodology, per the study designers, render the data representative of population, and hence, the observational study is generalizable.
+* The sampling method and subsequent 'raking' methodology, per the study designers, render the data representative of population, and hence, the observational study is generalize-able.
 
 ```{r is na, echo = FALSE}
 per_na <- mean(is.na(br_data))
@@ -50,7 +50,7 @@ any_complete <- sum(complete.cases(br_data))
 
 There are a large proportion of Na's (about `r round(per_na*100, digits = 2)` %). In fact, there are `r any_complete` complete cases. While this may present a problem, depending upon the variables being analysed, the types of questions being asked may not pertain to each individual and hence missing data is to be expected. The missing data may require a strategy to mitigate their effect, however, any strategy will be deployed on a case-by-case basis below.
 
-The dataset contains `r dim(br_data) ` columns (observations) and rows (variables) respectively. A detailed description of the variables can be found in the BRFSS 2013 codebook [here](https://www.cdc.gov/brfss/annual_data/2013/pdf/codebook13_llcp.pdf).
+The data-set contains `r dim(br_data) ` columns (observations) and rows (variables) respectively. A detailed description of the variables can be found in the BRFSS 2013 code-book [here](https://www.cdc.gov/brfss/annual_data/2013/pdf/codebook13_llcp.pdf).
 
 
 * * *
@@ -66,9 +66,9 @@ The research questions are motivated by a combination of currently topical subje
 
 To answer this question the following variables will be used:
 
-* $POORHLTH is a `r class(br_data$poorhlth)` variable (discrete) representing the number of days that responders reported (in the last 30 days) where they felt thier health (physical and mental) prevented them from doing their usual activities such as, such as self-care, work, or recreation.
+* $POORHLTH is a `r class(br_data$poorhlth)` variable (discrete) representing the number of days that participants reported (in the last 30 days) where they felt their health (physical and mental) prevented them from doing their usual activities such as, such as self-care, work, or recreation.
 
-* $HLTHPLN1 is a `r class(br_data$hlthpln1)` variable with the following levels `r levels(br_data$hlthpln1)` ie does the respondent have any type of health care coverage?
+* $HLTHPLN1 is a `r class(br_data$hlthpln1)` variable with the following levels `r levels(br_data$hlthpln1)` i.e. does the respondent have any type of health care coverage?
 
 * $X_age65yr is a `r class(br_data$X_age65yr)` variable with the following levels `r levels(br_data$X_age65yr)`
 
@@ -79,7 +79,7 @@ To answer this question the following variables will be used:
 
 To answer this question the following variables will be used:
 
-* $menthlth is `r class(br_data$menthlth)` variable (discrete) representing the number of days that survey responders reported (within a 30 days period prior to the interview) where they felt that they were not able to perform their usual activities due to issues related to thier mental health or thier emotional state.
+* $menthlth is `r class(br_data$menthlth)` variable (discrete) representing the number of days that survey participants reported (within a 30 days period prior to the interview) where they felt that they were not able to perform their usual activities due to issues related to their mental health or their emotional state.
 
       + This variable will be used to create a custom categorical (Yes, No) variable $MHEpisode indicating the presence or absence of self-reported days.
 
@@ -98,7 +98,7 @@ To answer this question the following variables will be used:
 
 To answer this question the following variables will be used:
 
-* $X_BMI5CAT is a `r class(br_data$X_bmi5cat)` variable with the following levels `r levels(br_data$X_bmi5cat)`. The cut-offs to ascertain membership in the weight classes per CDC codebook are:
+* $X_BMI5CAT is a `r class(br_data$X_bmi5cat)` variable with the following levels `r levels(br_data$X_bmi5cat)`. The cut-offs to ascertain membership in the weight classes per CDC code-book are:
       + Underweight < BMI 18.5
       + BMI 18.5 < Normal Weight > BMI 25
       + BMI 25 < Overweight > BMI 30
@@ -142,8 +142,8 @@ Some Observations:
 
 * Data peaks at zero, with subsequent minor peaks on the round numbers, 10, 15, 20, will a final peak on day 30. This may be an artifact of participants 'rounding up' the number of days they felt in poor health.
       + There are minor (daily) peaks between day 0 - 5 in the Health Covered group that do not appear in the Not Covered group. Further investigation in the difference could provide interesting explanations. However, for the purpose of this report, it will not be explored.
-      + The median of the $PoorHealth distribution is 0. In other words most partipants didn't report          being unwell in the 30 days prior to the interview.
-      + On average Americans experienced ~ 5 days of ill health due to either physical or mental reasons in the preceding 30 days before being interveiwed.
+      + The median of the $PoorHealth distribution is 0. In other words most participants didn't report          being unwell in the 30 days prior to the interview.
+      + On average Americans experienced ~ 5 days of ill health due to either physical or mental reasons in the preceding 30 days before being interviewed.
 
 For those that did report not feeling well in the last 30 days; mean and median are below.
 
@@ -152,7 +152,7 @@ writeLines("Table 1.1.2")
 q1 %>% filter(PoorHealth > 0) %>% group_by(Coverage) %>% 
    summarise(mean = mean(PoorHealth), median = median(PoorHealth))
 ```
-The data show those that reported feeling unwell, average about 12 days of total illness in the 30 days prior to their interview call. The most common total duration of illness was 7 days. There doesn't seem to be any difference in mean or median, based on the presense or absence of any healtcare coverage.
+The data show those that reported feeling unwell, average about 12 days of total illness in the 30 days prior to their interview call. The most common total duration of illness was 7 days. There doesn't seem to be any difference in mean or median, based on the presence or absence of any healthcare coverage.
 
 The proportion table the data is below.
 
@@ -169,7 +169,7 @@ rs <- rowSums(prop.table(testTable1))
 ```
 
 * Interpretation of the proportion table:
-      + 37.41% of all individuals have healthcare coverage and reported an episode of illhealth
+      + 37.41% of all individuals have healthcare coverage and reported an episode of ill-health
       + 50.11% of all individuals have coverage and did not report any episode.
       + 5.71 % of all individuals do not have coverage and reported an episode of ill health
       + 6.74 % of all individuals did not report an episode of ill health and do not have coverage.
@@ -190,7 +190,7 @@ The difference in proportions could be due to:
 * Some other factors not considered in the above analysis such as
       + Age, Presence of chronic disease, or other chronic illness, to name a few.
       
-Individuals in the US over the age of 65 are automatically covered by [Medicare](https://www.medicare.gov/index) and hence seperating the data by those above 65 years of age may be useful in understanding the relationship between episodes of ill health in the previous 30 day period and some form of healthcare coverage.
+Individuals in the US over the age of 65 are automatically covered by [Medicare](https://www.medicare.gov/index) and hence separating the data by those above 65 years of age may be useful in understanding the relationship between episodes of ill health in the previous 30 day period and some form of healthcare coverage.
 
 ***Are Health Coverage and Poor Health indepedent? Does Medicare (Age > 65 Yrs.) influence the relationship?***
 
@@ -219,7 +219,7 @@ par(mfrow=c(1,1))
 
 Interpretation of Mosaic Plots:
 
-* Boxes are shaded according to the dispropotionate influence of any residual. "Cells representing negative residuals are drawn in shaded of red and with broken borders; positive ones are drawn in blue with solid borders." [R Documentation for mosaicplot()](https://stat.ethz.ch/R-manual/R-devel/library/graphics/html/mosaicplot.html)
+* Boxes are shaded according to the disproportionate influence of any residual. "Cells representing negative residuals are drawn in shaded of red and with broken borders; positive ones are drawn in blue with solid borders." [R Documentation for mosaicplot()](https://stat.ethz.ch/R-manual/R-devel/library/graphics/html/mosaicplot.html)
 
 * The size of the boxes correspond to the proportionality of data
 
@@ -245,9 +245,9 @@ Interpretation of tests for independence and equality of proportions:
 
 * Tables 1.1.5 suggests that the variables Coverage are Poor Health are not independent of each other (regardless of the influence of medicare) because the respective p-values are below 0.05.
 
-* However, the porportions between Coverage and Poor Health (including when separating the Medicare population) **are not** statistically greater between populations at the 95% confidence interval.
+* However, the proportions between Coverage and Poor Health (including when separating the Medicare population) **are not** statistically greater between populations at the 95% confidence interval.
 
-**Conlusion:** The variables Coverage and Poor Health (an episode of ill health in the previous 30 days) are not entirely independent of each other. However, the difference in proportions between populations are not statitiscally greater than the other. Hence, there are other influencing factors not identified in the above analysis.
+**Conlusion:** The variables Coverage and Poor Health (an episode of ill health in the previous 30 days) are not entirely independent of each other. However, the difference in proportions between populations are not statistically greater than the other. Hence, there are other influencing factors not identified in the above analysis.
 
 ***
 
@@ -297,8 +297,8 @@ summary(q2_data)
 ```
 
 * Points to note in the summary of data:
-      + There are more female respondents than male respondents in the dataset.
-      + After reviewing the documentation asspciated with the $alcday5 variable used to compute the $Total_Drinks variable, NA values (indicating a person did not drink) were retained rather than being discarded. The proportion of NA matches the coding in the original dataset.
+      + There are more female respondents than male respondents in the data-set.
+      + After reviewing the documentation associated with the $alcday5 variable used to compute the $Total_Drinks variable, NA values (indicating a person did not drink) were retained rather than being discarded. The proportion of NA matches the coding in the original data-set.
       + $MHEpisode and $Drank_Alc are categorical (Yes / No) variables created to better visualize the data.
 
 Chosen graphical representation of the data:
@@ -344,22 +344,22 @@ grid.arrange(plot1, plot2, plot3, plot4, nrow = 2, ncol = 2)
 Interpretation of plots.
 
 * Plot 1 - Dot plot representing individual alcohol consumption positioned on a scale (x axis) representing the number of days respondents felt they were non-productive or unable to perform self care due to mental health concerns or emotional states; by gender.
-      + Note: a random selection of 20,000 points were used from the orignal data set to ease the compution load.
-      + There is a very large range of alcohol consumption which was very surprising and brings to question the accuracy of the survey methodology and / or the accuracy of self-reporting. Hence, a log scale was used to better viualize the plots.
-      + Overall there seems to be more women at the lower end of the scale and overall more blue dots ie females in the plot.
+      + Note: a random selection of 20,000 points were used from the original data set to ease the computation load.
+      + There is a very large range of alcohol consumption which was very surprising and brings to question the accuracy of the survey methodology and / or the accuracy of self-reporting. Hence, a log scale was used to better visualize the plots.
+      + Overall there seems to be more women at the lower end of the scale and overall more blue dots i.e. females in the plot.
             - This would indicate that there are more women who reported being non-productive due to mental health reasons; however they seem to be drinking less compared to males.
       + There is a cluster of males which drink proportionally more than the females but don't report any non-productivity due to mental health concerns (clustered around the origin of the x-axis).
 
-* Plot 2 - Boxplot of the Total Alcohol consumption vs the mental health categorical $MHEpisode by gender.
+* Plot 2 - Box-plot of the Total Alcohol consumption vs the mental health categorical $MHEpisode by gender.
       + Overall Data shows that Males drink more alcohol than Females.
       + Those who were non-productive due to mental health reasons drank more than those who were not.
       + Note the outliers of Females who consumed Alcohol and self-reported Mental health concerns.
       + The NA category indicates those individuals who chose not to respond to the question.
             - It seems that the Males among that group follow a similar consumption pattern to those who reported Mental health issues. Are these Males who are hiding their mental health concerns?
-            - It seems that Females in this group have similar consupmption distribution as those who did not report any mental health concerns.
+            - It seems that Females in this group have similar consumption distribution as those who did not report any mental health concerns.
 
 * Plot 3 - Density plot of Alcohol Consumption by Gender
-      + The data suggests that regardless of mental health concerns, mean drink more on average than women for those individuals who drink more than 10 alchoholic beverages per month. More women drink less than 10 alcoholic beverages per month than men.
+      + The data suggests that regardless of mental health concerns, mean drink more on average than women for those individuals who drink more than 10 alcoholic beverages per month. More women drink less than 10 alcoholic beverages per month than men.
       
 * Plot 4 - Number of individuals who report mental health concerns displayed in proportion of alcohol consumption.
       + Note the log scale.
@@ -371,7 +371,7 @@ Interpretation of plots.
 Select questions to quantify and confirm after EDA are:
 
 1. Is there a significant difference in the proportion of individuals who consumed alcohol and had mental health concerns?
-2. Are women disproportionally consuming more alcohol if there have mental health concerns?
+2. Are women disproportionately consuming more alcohol if there have mental health concerns?
 
 ```{r, echo=FALSE}
 writeLines("Table 2.1.2 - Proportion of Individuals who reported mental health concerns and reported consuming alcohol.")
@@ -393,7 +393,7 @@ summary(testTableQ2)
 
 Interpretation of Table 2.1.3:
 
-The three selected variables ($sex, $MHEpisode, $Drank_Alc) are not indepedent.
+The three selected variables ($sex, $MHEpisode, $Drank_Alc) are not independent.
 
 ```{r, echo=FALSE}
 writeLines("Visualizing difference in proportions")
@@ -402,7 +402,7 @@ mosaicplot(testTableQ2, shade = T, "Alcohol Consumption ~ Gender ~ Mental Health
 
 Interpretation of the Mosaic plot:
 
-* Note - Red colored boxes are proportions that are under-represented in the group ie less than expected if random. Conversely, blue squares are proportions over-represented in the group ie more than expected if random.
+* Note - Red colored boxes are proportions that are under-represented in the group i.e. less than expected if random. Conversely, blue squares are proportions over-represented in the group i.e. more than expected if random.
 
       + Among Males - 
             - Of those that do not report mental health concerns, those that consume alcohol are more than expected and those that do not consume alcohol are less than expected.
@@ -454,7 +454,7 @@ q3_balance_data <- br_data %>% select(Beans = beanday_,
 rm(br_data)
 ```
 
-* Creating a smaller dataset of randomly chosen rows for reducing the computation burden while creating plots.
+* Creating a smaller data-set of randomly chosen rows for reducing the computation burden while creating plots.
 
 ```{r}
 set.seed(5678)
@@ -491,21 +491,21 @@ writeLines("Visualizing Balanced_F and BMI")
 grid.arrange(plot_bmi, food_boxPlot, ncol = 2)
 ```
 
-Intepretation of plots 3.1 and 3.2:
+Interpretation of plots 3.1 and 3.2:
 
 Plot 3.1 visualizes the BMI distribution. The data is slightly skewed as can be seen the difference in the peak of the data vs the mean BMI of ~ 28 (Overweight, but not Obese).
 
-Plot 3.2 visualizes the $Balanced_F variable across the BMI categories. There median of each group lies underneath the mean of the entire cohort indicating, not only, skewness in the data, but also, that there may be variation amongst each category. In fact, a log10 scale has been used on the y axis to better visualize this plot.
+Plot 3.2 visualizes the $Balanced_F variable across the BMI categories. There median of each group lies underneath the mean of the entire cohort indicating, not only, skew-ness in the data, but also, that there may be variation among each category. In fact, a log10 scale has been used on the y axis to better visualize this plot.
 
-Plot 3.3 (below) explands on plot 3.2 by showing the spread of the data. Points to note:
+Plot 3.3 (below) expands on plot 3.2 by showing the spread of the data. Points to note:
 
-* The center of mass appears in the BMI zone of 23 - 30 ie normal weight to overweight.
+* The center of mass appears in the BMI zone of 23 - 30 i.e. normal weight to overweight.
 
 * There are fewer points in the underweight category and there is a larger range of obese individuals.
 
 * There is more variability in both ends of the BMI spectrum (to be expected)
 
-* Overall there seems to be a negative correlation between BMI and Balance_F ie higher the Balance_F lower the BMI.
+* Overall there seems to be a negative correlation between BMI and Balance_F i.e. higher the Balance_F lower the BMI.
 
 ```{r, echo=FALSE, warning=FALSE}
 Food_scatterPlot <- mini_q3_data %>% ggplot(aes(x = BMI, y = Balance_F)) + 
@@ -533,9 +533,9 @@ writeLines("Table 3.2.2")
 pairwise.wilcox.test(test_data$Balance_F, test_data$BMI_Levels, p.adjust.method = "bonferroni")
 ```
 
-The low p-value in Table 3.2.1 indicates that the BMI categories and the Balance_F variable are not independant.
+The low p-value in Table 3.2.1 indicates that the BMI categories and the Balance_F variable are not independent.
 
-Table 3.2.2 describes the statistical independence between categories for the variable Balance_F. In other words, Balance_F is statistically independant between the Underweight and Overweight categories ie the variation between those two groups is similar. However, the variation in Balance_F among other categories is significantly different.
+Table 3.2.2 describes the statistical independence between categories for the variable Balance_F. In other words, Balance_F is statistically independent between the Underweight and Overweight categories i.e. the variation between those two groups is similar. However, the variation in Balance_F among other categories is significantly different.
 
 This is an interesting aspect of the data and could indicate that those that are underweight and those that are overweight have similar food consumption with each other, but different from those that obese and of normal weight.
 
@@ -550,9 +550,9 @@ cor.test(q3_balance_data$BMI, q3_balance_data$Balance_F)
 
 ***
 
-A note on the cause of variablity in Balance_F:
+A note on the cause of variability in Balance_F:
 
-The creation of Balance_F was an artifact based on the assumption that different types of foods and thier balanced intake could have a relationship with BMI. However, where does the variation in this data exist? [PCA](https://en.wikipedia.org/wiki/Principal_component_analysis) is a good method to explore the underlying variation in the data. Table 3.3.1 and Table 3.3.2 shows one way to look at the underlying components of Balance_F, further exploration of which could lead to a better understanding of individual food components and their relationship to BMI.
+The creation of Balance_F was an artifact based on the assumption that different types of foods and their balanced intake could have a relationship with BMI. However, where does the variation in this data exist? [PCA](https://en.wikipedia.org/wiki/Principal_component_analysis) is a good method to explore the underlying variation in the data. Table 3.3.1 and Table 3.3.2 shows one way to look at the underlying components of Balance_F, further exploration of which could lead to a better understanding of individual food components and their relationship to BMI.
 
 ```{r, echo=FALSE}
 test_data2 <- q3_balance_data %>% select(Beans, Greens, OrangeV, Fruits)
@@ -565,10 +565,10 @@ writeLines("Table 3.4.2")
 q3_pca$rotation
 ```
 
-Principle components (PC) 2 to 4 explain ~ 60% variation in the data. PC1 explains ~40% of the variation and Table 3.3.2 provides the respective weights to the undderlying food groups that result in the maximal variation. Further study into these techniques (beyond the scope of this overview) could provide interesting ways to understand food proportions.
+Principle components (PC) 2 to 4 explain ~ 60% variation in the data. PC1 explains ~40% of the variation and Table 3.3.2 provides the respective weights to the underlying food groups that result in the maximal variation. Further study into these techniques (beyond the scope of this overview) could provide interesting ways to understand food proportions.
 
 <!-- End -->
 
 ***
 
-Github link to original source code [link]()
+Git-hub link to original source code [link](https://github.com/maximegalon5/brfss_exploration)
