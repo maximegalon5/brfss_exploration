@@ -1,0 +1,574 @@
+---
+title: "Exploring the BRFSS dataset"
+author: "Vivek Narayan"
+date: "October, 2018"
+output: 
+  html_document: 
+    fig_caption: yes
+    fig_width: 9
+    highlight: pygments
+    theme: spacelab
+---
+## Introduction
+
+The below is a limited exploratory data analysis on the brfss [data set](https://www.cdc.gov/brfss/annual_data/annual_2013.html) for the purposes of an assigment for the Introduction to Probability and Data course offered by Duke University on Coursera [link](https://www.coursera.org/learn/probability-intro). The assigmment requires choosing three questions by the program participants based on their interest, the underlying data, and, the learning objectives of the module. Since the dataset is large (over 330 variables) the EDA will focus on variables assumed relevent to the questions being posed by the author.
+
+## Setup
+
+The following version of R is being used (`r getRversion()`) and the markdown file is being created through RStudio's desktop [client](https://www.rstudio.com/products/rstudio/#Desktop). For a complete detail of the code used to generate this document please visit (github link). For the purposes of readability, the EDA will focus on the summary statistics and graphics generated from the same and will skip some of the code output not required for grading the assignment.
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(tidyverse)
+library(gridExtra)
+library(purrr)
+```
+
+### Load data
+
+```{r load-data}
+load("brfss2013.RData")
+br_data <- brfss2013; rm("brfss2013")
+```
+
+* * *
+
+## Part 1: Data
+
+Per CDC's brief on the BRFSS2013 dataset [link](https://www.cdc.gov/brfss/annual_data/2013/pdf/Overview_2013.pdf), the Behavioral Risk Factor Surveillance System (BRFSS) project, and the resulant dataset, is a collaboration between the Centers for Disease Control (CDC) and US States and participating Territitories. The purpose of collecting data regarding health-related risk behaviors, chronic health conditions, and use of preventive services is to better create health promotion tools for US residents. The following aspects of the dataset are relevent to this project:
+
+* It is an observational study conducted via telephones and cellular phones and hence correlations between variables can be ascertained. Causal inference cannot be made unless advanced techniques [link](https://www.stata-journal.com/sjpdf.html?articlenum=st0136) (beyond the scope of this project) are deployed.
+      + The study methodology recognizes that some individuals have both landlines and cellular phones and only selects people for the study that have either a landline or use their cellular phone as thier primary phone more than 90 % of the time. Their are randomization algorithms in place to ensure randomized sampling.
+
+* The sampling method and subsequent 'raking' methodology, per the study designers, render the data representative of population, and hence, the observational study is generalizable.
+
+```{r is na, echo = FALSE}
+per_na <- mean(is.na(br_data))
+any_complete <- sum(complete.cases(br_data))
+```
+
+There are a large proportion of Na's (about `r round(per_na*100, digits = 2)` %). In fact, there are `r any_complete` complete cases. While this may present a problem, depending upon the variables being analysed, the types of questions being asked may not pertain to each individual and hence missing data is to be expected. The missing data may require a strategy to mitigate their effect, however, any strategy will be deployed on a case-by-case basis below.
+
+The dataset contains `r dim(br_data) ` columns (observations) and rows (variables) respectively. A detailed description of the variables can be found in the BRFSS 2013 codebook [here](https://www.cdc.gov/brfss/annual_data/2013/pdf/codebook13_llcp.pdf).
+
+
+* * *
+
+## Part 2: Research questions
+
+The research questions are motivated by a combination of currently topical subjects along with the author's personal curiosities given his background in healthcare, along with his interest in nutrition.
+
+<!-- Question 1 -->
+
+**What is the relationship, if any, between poor mental or physical health and health coverage?**
+***Do Adults over 65 (covered by medicare) influence the relationship?***
+
+To answer this question the following variables will be used:
+
+* $POORHLTH is a `r class(br_data$poorhlth)` variable (discrete) representing the number of days that responders reported (in the last 30 days) where they felt thier health (physical and mental) prevented them from doing their usual activities such as, such as self-care, work, or recreation.
+
+* $HLTHPLN1 is a `r class(br_data$hlthpln1)` variable with the following levels `r levels(br_data$hlthpln1)` ie does the respondent have any type of health care coverage?
+
+* $X_age65yr is a `r class(br_data$X_age65yr)` variable with the following levels `r levels(br_data$X_age65yr)`
+
+<!-- Question 2 -->
+
+**What is the relatioship, if any, between mental health and alcohol consumption?**
+***Are there any gender differences?***
+
+To answer this question the following variables will be used:
+
+* $menthlth is `r class(br_data$menthlth)` variable (discrete) representing the number of days that survey responders reported (within a 30 days period prior to the interview) where they felt that they were not able to perform their usual activities due to issues related to thier mental health or thier emotional state.
+
+      + This variable will be used to create a custom categorical (Yes, No) variable $MHEpisode indicating the presence or absence of self-reported days.
+
+* $AVEDRNK2 is `r class(br_data$avedrnk2)` variable (discrete) representing the number of alcoholic beverages on average consumed by the respondent whenever they consumed an alcoholic beverage in the 30 days prior to the interview.
+
+      + This variable will also be used to create a custom categorical (Yes, No) variable $Drank_Alc, indicating whether the respondent did or did not consume alcohol in the 30 days prior to the interview.
+
+* $ALCDAY5 is `r class(br_data$alcday5)` variable (discrete) representing the number of days per week or per month the survey respondent consumed an alcoholic beverage in the 30 days prior to the interview.
+
+      + alcday5 and avedrnk2 will be used to compute the total number of drinks (Total_Drinks) consumed by the respondent in the 30 days prior to the interview
+
+<!-- Question 3 -->
+
+**What is the relationship between BMI and Balanced Food consumption, if any?**
+***Balanced Food consumption will be measured by aggregating consumption of Fruits, Vegetables and Beans.***
+
+To answer this question the following variables will be used:
+
+* $X_BMI5CAT is a `r class(br_data$X_bmi5cat)` variable with the following levels `r levels(br_data$X_bmi5cat)`. The cut-offs to ascertain membership in the weight classes per CDC codebook are:
+      + Underweight < BMI 18.5
+      + BMI 18.5 < Normal Weight > BMI 25
+      + BMI 25 < Overweight > BMI 30
+      + BMI 30 < Obese
+      
+* $X_bmi5 is a `r class(br_data$X_bmi5)` variable (continuous) with values representing the calculated BMI of participants for their responses to the question of height and weight.
+      
+* $beanday_ , $grenday_, $orngday_, $frutda1_, are numeric variables indicating the number of times per day intake of beans, dark green vegetables, orange colored vegetables, and fruits, respectively.
+      + These variables will be aggregated (without weights) to create the variable $Balance_F which is simply the sum of the above food intake.
+
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+<!-- Question 1 -->
+
+**Q.1 What is the relationship, if any, between poor mental or physical health and health coverage?**
+***Do Adults over 65 (covered by medicare) influence the relationship?***
+
+The following is a summary of the three chosen variables, along with a density plot of the number of self-reported poor health days. 
+Since $poorhlth has to be a number between 0 - 30, values over 30 and Na values have been discarded.
+
+```{r summary for q1, echo = FALSE}
+# Select data and summarize
+q1 <- br_data %>% select(X_age65yr, PoorHealth = poorhlth, Coverage = hlthpln1) %>% na.omit()
+writeLines("Table 1.1.1")
+summary(q1)
+```
+ 
+
+```{r eda for q1, echo=FALSE, fig.height=5, fig.width=8}
+# Density Plot for PoorHealth (sliced by Coverage)
+
+plot1 <- ggplot(q1, aes(PoorHealth)) + geom_density(aes(fill = q1$Coverage), alpha = .25) + theme_light() + labs(x = "Number of Self Reported Poor Health Days") + theme(legend.position = "top") + scale_fill_discrete(name = "Health Coverage?")
+
+plot1
+```
+
+Some Observations:
+
+* Data peaks at zero, with subsequent minor peaks on the round numbers, 10, 15, 20, will a final peak on day 30. This may be an artifact of participants 'rounding up' the number of days they felt in poor health.
+      + There are minor (daily) peaks between day 0 - 5 in the Health Covered group that do not appear in the Not Covered group. Further investigation in the difference could provide interesting explanations. However, for the purpose of this report, it will not be explored.
+      + The median of the $PoorHealth distribution is 0. In other words most partipants didn't report          being unwell in the 30 days prior to the interview.
+      + On average Americans experienced ~ 5 days of ill health due to either physical or mental reasons in the preceding 30 days before being interveiwed.
+
+For those that did report not feeling well in the last 30 days; mean and median are below.
+
+```{r, echo = FALSE}
+writeLines("Table 1.1.2")
+q1 %>% filter(PoorHealth > 0) %>% group_by(Coverage) %>% 
+   summarise(mean = mean(PoorHealth), median = median(PoorHealth))
+```
+The data show those that reported feeling unwell, average about 12 days of total illness in the 30 days prior to their interview call. The most common total duration of illness was 7 days. There doesn't seem to be any difference in mean or median, based on the presense or absence of any healtcare coverage.
+
+The proportion table the data is below.
+
+```{r echo=FALSE}
+# Converting $PoorHealth into a binary factor
+q1c <- q1 %>% mutate(PoorHealth = ifelse(PoorHealth == 0, "Well", "Unwell")) %>% 
+   select(X_age65yr, PoorHealth, Coverage)
+
+testTable1 <- q1c %>% select(PoorHealth, Coverage) %>% table()
+writeLines("Table 1.1.3")
+prop.table(testTable1)
+cs <- colSums(prop.table(testTable1))
+rs <- rowSums(prop.table(testTable1))
+```
+
+* Interpretation of the proportion table:
+      + 37.41% of all individuals have healthcare coverage and reported an episode of illhealth
+      + 50.11% of all individuals have coverage and did not report any episode.
+      + 5.71 % of all individuals do not have coverage and reported an episode of ill health
+      + 6.74 % of all individuals did not report an episode of ill health and do not have coverage.
+      + Of the total, there are `r round(rs[2]*100, 2)`% and `r round(rs[1]*100, 2)`% people are labelled Unwell and Well respectively.
+      + Of the total, there are `r round(cs[1]*100, 2)`% and `r round(cs[2]*100, 2)`% people who do and do not have healthcare coverage respectively.
+      + 86.74% of those people labelled unwell have some form of healthcare coverage. See Table 1.1.4.
+      + 88.13% of those who are labelled well have some form of healthcare coverage. See Table 1.1.4.
+      
+```{r echo=FALSE, warning=FALSE}
+writeLines("Table 1.1.4")
+prop.test(testTable1)
+```
+
+The difference in proportions could be due to:
+
+* Randomness
+* A reflection in the variability due to Health Coverage
+* Some other factors not considered in the above analysis such as
+      + Age, Presence of chronic disease, or other chronic illness, to name a few.
+      
+Individuals in the US over the age of 65 are automatically covered by [Medicare](https://www.medicare.gov/index) and hence seperating the data by those above 65 years of age may be useful in understanding the relationship between episodes of ill health in the previous 30 day period and some form of healthcare coverage.
+
+***Are Health Coverage and Poor Health indepedent? Does Medicare (Age > 65 Yrs.) influence the relationship?***
+
+```{r echo=FALSE, fig.height=4, fig.width=9}
+
+testTable1_65 <- q1c %>% filter(X_age65yr == "Age 65 or older") %>% 
+   select(PoorHealth, Coverage) %>% 
+   table()
+
+testTable1_18_64 <- q1c %>% filter(X_age65yr == "Age 18 to 64") %>% 
+   select(PoorHealth, Coverage) %>% 
+   table()
+
+par(mfrow = c(1,3), oma=c(0,0,3,0))
+
+plot3 <- mosaicplot(testTable1, shade = T, main = "All Adults", xlab = "Plot A")
+
+plot4 <- mosaicplot(testTable1_65, shade = T, main = "Adults over 65 yrs.", xlab = "Plot B")
+
+plot5 <- mosaicplot(testTable1_18_64, shade = T, xlab = "Plot C" , main = "Age 18 to 64")
+title("Proportion of Individuals Coverage ~ Ill Health Episode", outer = TRUE)
+
+
+par(mfrow=c(1,1))
+```
+
+Interpretation of Mosaic Plots:
+
+* Boxes are shaded according to the dispropotionate influence of any residual. "Cells representing negative residuals are drawn in shaded of red and with broken borders; positive ones are drawn in blue with solid borders." [R Documentation for mosaicplot()](https://stat.ethz.ch/R-manual/R-devel/library/graphics/html/mosaicplot.html)
+
+* The size of the boxes correspond to the proportionality of data
+
+* The medicare coverage influence on the data is clear if one compares Plot B to Plot C (The boxes representing 'No')
+
+* When considered in isolation, co-variation between Coverage and ill health episodes seems to less in adults over the age of 65 and more in adults below 65 years.
+
+Is the difference in proportions significantly greater?
+
+```{r, echo=F}
+writeLines("Table 1.1.5")
+q1Df <- data.frame(row.names = c("All adults", "Adults Over 65", "Adults 18 to 64"))
+q1Df$Independence_pValue <- round(c(summary(testTable1)$p.value, summary(testTable1_65)$p.value, summary(testTable1_18_64)$p.value), 4)
+
+q1tempAll <- prop.test(testTable1, correct = F, alternative = "greater")
+q1tempA65 <- prop.test(testTable1_65, correct = F, alternative = "greater")
+q1tempA18 <- prop.test(testTable1_18_64, correct = F, alternative = "greater")
+q1Df$Greater_pValue <- round(c(q1tempAll$p.value, q1tempA65$p.value, q1tempA18$p.value), 2)
+q1Df
+```
+
+Interpretation of tests for independence and equality of proportions:
+
+* Tables 1.1.5 suggests that the variables Coverage are Poor Health are not independent of each other (regardless of the influence of medicare) because the respective p-values are below 0.05.
+
+* However, the porportions between Coverage and Poor Health (including when separating the Medicare population) **are not** statistically greater between populations at the 95% confidence interval.
+
+**Conlusion:** The variables Coverage and Poor Health (an episode of ill health in the previous 30 days) are not entirely independent of each other. However, the difference in proportions between populations are not statitiscally greater than the other. Hence, there are other influencing factors not identified in the above analysis.
+
+***
+
+<!-- Question 2 -->
+
+**Q.2 What is the relatioship, if any, between mental health and alcohol consumption?**
+
+***Are there any gender differences?***
+
+A brief computation of the selected variables follows, along with a summary of the data.
+
+```{r}
+#create smaller data with chosen variables
+q2b <- br_data %>% select(sex, 
+          Mental_Health = menthlth, 
+          Ave_Drinks = avedrnk2, 
+          Drink_Days = alcday5) %>% # create categorical vairables $MHEpisode, $Drank_Alc
+   mutate(MHEpisode = ifelse(Mental_Health > 0, "Yes_M", "No_M"),
+          Drank_Alc = ifelse(Drink_Days > 0, "Consumed Alcohol", "Did Not Consume Alc"))
+
+# Function to convert $alcday5 into Total Drinks
+convert.DrinksAlc <- function(x) {
+   as.character(x)
+   if (grepl("^1", x)) { 
+      y = (as.numeric(x) - 100)*4
+   } else if (grepl("^2", x)) { 
+      y = (as.numeric(x) - 200)
+   } else {y = x}
+   y
+}
+# apply convert.DrinksAlc to $Drink_Days
+q2b$Drink_Days <- map_dbl(q2b$Drink_Days, convert.DrinksAlc)
+# filter days to remove negative values computed by miscoded answers.
+q2b <- q2b %>% filter(Drink_Days >= 0)
+
+# create $Total_Drinks and select variables for plots
+q2_data <- q2b %>% mutate(Total_Drinks = Drink_Days * Ave_Drinks) %>%
+   select(sex, Mental_Health, Total_Drinks, MHEpisode, Drank_Alc)
+
+rm(q2b)
+```
+
+```{r, echo = FALSE}
+#summary
+writeLines("Table 2.1.1 - Summary of the selected variables")
+summary(q2_data)
+```
+
+* Points to note in the summary of data:
+      + There are more female respondents than male respondents in the dataset.
+      + After reviewing the documentation asspciated with the $alcday5 variable used to compute the $Total_Drinks variable, NA values (indicating a person did not drink) were retained rather than being discarded. The proportion of NA matches the coding in the original dataset.
+      + $MHEpisode and $Drank_Alc are categorical (Yes / No) variables created to better visualize the data.
+
+Chosen graphical representation of the data:
+
+```{r, q2 eda, echo=FALSE, warning=FALSE}
+#Plots
+# Mental Health vs Total Drinks by Gender p1
+set.seed(5678)
+size = nrow(q2_data)
+
+mini_q2_data <- q2_data[sample(1:size, 20000),]
+plot1 <- mini_q2_data %>% ggplot(aes(x = Mental_Health, y = Total_Drinks)) + geom_point(aes(color = sex), alpha = 0.2, position = "jitter") + scale_y_log10() + theme_minimal() +
+   labs(title = "P.1 Mental Health or Emotional Concerns", x = "Number of days is the 30 days prior to interview",
+        y = "Total Number of Alcoholic Drinks")
+
+#Box plot of Total Drinks Vs ME Episode p2
+plot2 <- q2_data %>% ggplot(aes(MHEpisode, Total_Drinks)) + geom_boxplot(aes(fill = sex)) + 
+   labs(title = "~ P.2 Alcohol Consumption", x = "Non-productive due to Mental Health Concerns (Y / N)") +
+   theme_minimal() +
+   scale_y_log10()
+
+# Desnity of the Distribution of Total Drinks by gender p3
+plot3 <- q2_data %>% ggplot(aes(Total_Drinks)) + 
+   geom_density(aes(fill = sex), alpha = 0.25) + 
+   scale_x_log10() +
+   labs(title = "P.3 Alcohol Consumption ~ Gender", x = "Total Number of Alcoholic Beverages Consumed") +
+   theme_minimal()
+
+# Mental Health Vs Drinks Alcohol using geom_bar() p4
+plot4 <- q2_data %>% ggplot(aes(Mental_Health)) + 
+   geom_bar(aes(fill = Drank_Alc), position = "dodge", alpha = 0.50) +
+   labs(title = "~ P.4 Mental Health concerns", x = "Number of days in the 30 days prior to interview") +
+   scale_y_log10() +
+   theme_minimal() +
+   scale_fill_manual(aesthetics = "fill", values = c("red", "blue"), name = "Alcohol Consumption")
+   
+
+library(gridExtra)
+grid.arrange(plot1, plot2, plot3, plot4, nrow = 2, ncol = 2)
+
+```
+
+Interpretation of plots.
+
+* Plot 1 - Dot plot representing individual alcohol consumption positioned on a scale (x axis) representing the number of days respondents felt they were non-productive or unable to perform self care due to mental health concerns or emotional states; by gender.
+      + Note: a random selection of 20,000 points were used from the orignal data set to ease the compution load.
+      + There is a very large range of alcohol consumption which was very surprising and brings to question the accuracy of the survey methodology and / or the accuracy of self-reporting. Hence, a log scale was used to better viualize the plots.
+      + Overall there seems to be more women at the lower end of the scale and overall more blue dots ie females in the plot.
+            - This would indicate that there are more women who reported being non-productive due to mental health reasons; however they seem to be drinking less compared to males.
+      + There is a cluster of males which drink proportionally more than the females but don't report any non-productivity due to mental health concerns (clustered around the origin of the x-axis).
+
+* Plot 2 - Boxplot of the Total Alcohol consumption vs the mental health categorical $MHEpisode by gender.
+      + Overall Data shows that Males drink more alcohol than Females.
+      + Those who were non-productive due to mental health reasons drank more than those who were not.
+      + Note the outliers of Females who consumed Alcohol and self-reported Mental health concerns.
+      + The NA category indicates those individuals who chose not to respond to the question.
+            - It seems that the Males among that group follow a similar consumption pattern to those who reported Mental health issues. Are these Males who are hiding their mental health concerns?
+            - It seems that Females in this group have similar consupmption distribution as those who did not report any mental health concerns.
+
+* Plot 3 - Density plot of Alcohol Consumption by Gender
+      + The data suggests that regardless of mental health concerns, mean drink more on average than women for those individuals who drink more than 10 alchoholic beverages per month. More women drink less than 10 alcoholic beverages per month than men.
+      
+* Plot 4 - Number of individuals who report mental health concerns displayed in proportion of alcohol consumption.
+      + Note the log scale.
+      + There are a large proportion of people who didn't report any mental health concerns (0 at the x-axis) and it appears that the proportions are equally distributed between those that did and did not consume alcohol.
+      + Of the individuals who did report mental health concerns, and had 10 or less non-productive days, there are more individuals who consumed alcohol than those that did not.
+            - However, beyond 10 days of self-reported non-productivity, there are less alcohol consumers than not.
+      + It could be that the above indicates alcohol consumption patterns in acute vs chronic mental health concerns and would be an area of continued research (beyond the scope of this paper).
+      
+Select questions to quantify and confirm after EDA are:
+
+1. Is there a significant difference in the proportion of individuals who consumed alcohol and had mental health concerns?
+2. Are women disproportionally consuming more alcohol if there have mental health concerns?
+
+```{r, echo=FALSE}
+writeLines("Table 2.1.2 - Proportion of Individuals who reported mental health concerns and reported consuming alcohol.")
+Alc_ME_table <- q2_data %>% select(Drank_Alc, MHEpisode) %>% table(exclude = NA)
+prop.table(Alc_ME_table)
+writeLines("prop.test()")
+prop.test(Alc_ME_table, correct = FALSE)
+```
+
+Interpretation of Table 2.1.2:
+
+There is a minor difference in proportion between those individuals who consumed alcohol and reported mental health concerns. The 95% CI of this difference is 0.7% - 1.24%.
+
+```{r, echo=FALSE}
+testTableQ2 <- q2_data %>% select(sex, MHEpisode, Drank_Alc) %>% table(useNA = "no")
+writeLines("Table 2.1.3 - Test for independence of proportions: Individuals who reported mental health concerns and reported consuming alcohol by gender.")
+summary(testTableQ2)
+```
+
+Interpretation of Table 2.1.3:
+
+The three selected variables ($sex, $MHEpisode, $Drank_Alc) are not indepedent.
+
+```{r, echo=FALSE}
+writeLines("Visualizing difference in proportions")
+mosaicplot(testTableQ2, shade = T, "Alcohol Consumption ~ Gender ~ Mental Health Concerns")
+```
+
+Interpretation of the Mosaic plot:
+
+* Note - Red colored boxes are proportions that are under-represented in the group ie less than expected if random. Conversely, blue squares are proportions over-represented in the group ie more than expected if random.
+
+      + Among Males - 
+            - Of those that do not report mental health concerns, those that consume alcohol are more than expected and those that do not consume alcohol are less than expected.
+            - Of those that reported mental health concerns, the proportion of males that consume alcohol are less than expected (red) vs females (blue) who are more than expected.
+      + Among Females - 
+            - Among those that did not report mental health concerns, those that consumed alcohol are less than expected (red) and those that did not consume alcohol are more than expected (blue).
+            - Among those that reported mental health concerns, both those that consumed alcohol, and those that didn't, are more than expected.
+            
+**Conclusions:**
+
+2.1 There is a difference in alcohol consumption between Males and Females. Table 2.2.1
+```{r}
+gender_Alc_table <- q2_data %>% select(Drank_Alc, sex) %>% table(useNA = "no")
+prop.test(gender_Alc_table, correct = FALSE)
+```
+
+2.2 There is a difference in mental health concerns between Males and Females. Table 2.2.2
+```{r}
+gender_MH_table <- q2_data %>% select(MHEpisode, sex) %>% table(useNA = "no")
+prop.test(gender_MH_table, correct = FALSE, alternative = "greater")
+```
+
+2.3 Among those that consume alcohol, males report less mental health concerns than women. Table 2.2.3
+```{r}
+Alc_gend_MH <- q2_data %>% 
+   filter(Drank_Alc == "Consumed Alcohol") %>% 
+   select(sex, MHEpisode) %>% table(useNA = "no")
+prop.test(Alc_gend_MH, correct = FALSE, alternative = "greater")
+```
+
+***
+
+<!-- Question 3 -->
+
+**Q.3 What is the relationship between BMI and balanced food consumption, if any?**
+
+Data preparation for the analysis will consist of:
+
+* Creating $Balance_F - arithmetic sum of selected foods consumed.
+
+```{r}
+q3_balance_data <- br_data %>% select(Beans = beanday_, 
+                                      Greens = grenday_, 
+                                      OrangeV = orngday_,
+                                      Fruits = frutda1_,
+                                      BMI = X_bmi5,
+                                      BMI_Levels = X_bmi5cat) %>% na.omit() %>%
+   mutate(Balance_F = Beans + Greens + OrangeV + Fruits)
+rm(br_data)
+```
+
+* Creating a smaller dataset of randomly chosen rows for reducing the computation burden while creating plots.
+
+```{r}
+set.seed(5678)
+size = nrow(q3_balance_data)
+mini_q3_data <- q3_balance_data[sample(1:size, 10000),]
+```
+
+Table 3.1.1 summarizes the data:
+The range of the food consumption and BMI variables seems large. Note, there are two decimal places implied in the BMI variable.
+      
+```{r , echo=FALSE}
+writeLines("Table 3.1.1")
+summary(q3_balance_data)
+```
+
+
+```{r, echo =  FALSE, warning=FALSE, fig.width=9, fig.height=5}
+#Plot BMI and Balanced Food
+plot_bmi <- mini_q3_data %>% ggplot(aes(x = BMI)) + 
+   geom_density() + theme_minimal() +
+   geom_vline(aes(xintercept = mean(BMI)), color = "blue", linetype = "dashed") +
+   scale_x_continuous(limits = c(0,7500)) +
+   geom_text(aes(x=mean(q3_balance_data$BMI),
+                 y=0.00005),label="Mean",size=3, color = "blue", hjust = - 1) +
+   labs(title = "BMI Distribution - BRFSS Dataset")
+
+food_boxPlot <- mini_q3_data %>% ggplot(aes(BMI_Levels, Balance_F)) + 
+   geom_boxplot(aes(fill = BMI_Levels)) + scale_y_log10() + theme_minimal() +
+   geom_hline(aes(yintercept = mean(Balance_F)), color = "blue", linetype = "dashed") +
+   geom_text(aes(y=mean(Balance_F), x = 4.2),
+             label="Mean",size=3, color = "blue", vjust = -4) +
+   labs(title = "P.3.2 Balanced food and BMI categories")
+writeLines("Visualizing Balanced_F and BMI")
+grid.arrange(plot_bmi, food_boxPlot, ncol = 2)
+```
+
+Intepretation of plots 3.1 and 3.2:
+
+Plot 3.1 visualizes the BMI distribution. The data is slightly skewed as can be seen the difference in the peak of the data vs the mean BMI of ~ 28 (Overweight, but not Obese).
+
+Plot 3.2 visualizes the $Balanced_F variable across the BMI categories. There median of each group lies underneath the mean of the entire cohort indicating, not only, skewness in the data, but also, that there may be variation amongst each category. In fact, a log10 scale has been used on the y axis to better visualize this plot.
+
+Plot 3.3 (below) explands on plot 3.2 by showing the spread of the data. Points to note:
+
+* The center of mass appears in the BMI zone of 23 - 30 ie normal weight to overweight.
+
+* There are fewer points in the underweight category and there is a larger range of obese individuals.
+
+* There is more variability in both ends of the BMI spectrum (to be expected)
+
+* Overall there seems to be a negative correlation between BMI and Balance_F ie higher the Balance_F lower the BMI.
+
+```{r, echo=FALSE, warning=FALSE}
+Food_scatterPlot <- mini_q3_data %>% ggplot(aes(x = BMI, y = Balance_F)) + 
+   geom_point(aes(color = BMI_Levels),alpha = 0.2) +
+   labs(title = "P.3.3 BMI and Balanced Food Consumption") +
+   geom_hline(aes(yintercept = mean(Balance_F)), color = "blue", linetype = "dashed") +
+      geom_text(aes(y=mean(Balance_F), x = 7000),
+                label="Mean",size=3, color = "blue", vjust = 1) + 
+   scale_x_log10() + scale_y_log10() +
+   geom_smooth(method = "lm", show.legend = F) +
+   theme_minimal()
+
+Food_scatterPlot
+```
+
+However, is the difference in Balance_F statistically significant across categories?
+
+```{r, echo=FALSE}
+test_data <- q3_balance_data %>% select(BMI_Levels, Balance_F)
+
+writeLines("Table 3.2.1")
+kruskal.test(Balance_F ~ BMI_Levels, data = test_data)
+
+writeLines("Table 3.2.2")
+pairwise.wilcox.test(test_data$Balance_F, test_data$BMI_Levels, p.adjust.method = "bonferroni")
+```
+
+The low p-value in Table 3.2.1 indicates that the BMI categories and the Balance_F variable are not independant.
+
+Table 3.2.2 describes the statistical independence between categories for the variable Balance_F. In other words, Balance_F is statistically independant between the Underweight and Overweight categories ie the variation between those two groups is similar. However, the variation in Balance_F among other categories is significantly different.
+
+This is an interesting aspect of the data and could indicate that those that are underweight and those that are overweight have similar food consumption with each other, but different from those that obese and of normal weight.
+
+**Conclusion:**
+
+Additional exploration is required to ascertain the cause of these differences. However, it must be noted that the variation in Balance_F only explains very little of the variation in BMI (see Table 3.3.1)
+
+```{r, echo=FALSE}
+writeLines("Table 3.3.1")
+cor.test(q3_balance_data$BMI, q3_balance_data$Balance_F)
+```
+
+***
+
+A note on the cause of variablity in Balance_F:
+
+The creation of Balance_F was an artifact based on the assumption that different types of foods and thier balanced intake could have a relationship with BMI. However, where does the variation in this data exist? [PCA](https://en.wikipedia.org/wiki/Principal_component_analysis) is a good method to explore the underlying variation in the data. Table 3.3.1 and Table 3.3.2 shows one way to look at the underlying components of Balance_F, further exploration of which could lead to a better understanding of individual food components and their relationship to BMI.
+
+```{r, echo=FALSE}
+test_data2 <- q3_balance_data %>% select(Beans, Greens, OrangeV, Fruits)
+q3_pca <- prcomp(test_data2, center = T, scale = T)
+
+writeLines("Table 3.4.1")
+summary(q3_pca)
+
+writeLines("Table 3.4.2")
+q3_pca$rotation
+```
+
+Principle components (PC) 2 to 4 explain ~ 60% variation in the data. PC1 explains ~40% of the variation and Table 3.3.2 provides the respective weights to the undderlying food groups that result in the maximal variation. Further study into these techniques (beyond the scope of this overview) could provide interesting ways to understand food proportions.
+
+<!-- End -->
+
+***
+
+Github link to original source code [link]()
