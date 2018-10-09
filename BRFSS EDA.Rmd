@@ -66,7 +66,7 @@ The research questions are motivated by a combination of currently topical subje
 
 To answer this question the following variables will be used:
 
-* $POORHLTH is a `r class(br_data$poorhlth)` variable (discrete) representing the number of days that participants reported (in the last 30 days) where they felt their health (physical and mental) prevented them from doing their usual activities such as, such as self-care, work, or recreation.
+* $POORHLTH is a `r class(br_data$poorhlth)` variable (discrete) representing the number of days that participants reported (in the last 30 days) where they felt their health (physical and mental) prevented them from doing their usual activities such as, self-care, work, or recreation.
 
 * $HLTHPLN1 is a `r class(br_data$hlthpln1)` variable with the following levels `r levels(br_data$hlthpln1)` i.e. does the respondent have any type of health care coverage?
 
